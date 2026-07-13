@@ -12,6 +12,7 @@
     app: document.getElementById('app'),
     songTitle: document.getElementById('songTitle'),
     songArtist: document.getElementById('songArtist'),
+    songCount: document.getElementById('songCount'),
     voice: document.getElementById('voice'),
     voiceLabel: document.getElementById('voiceLabel'),
     lyrics: document.getElementById('lyrics'),
@@ -28,6 +29,9 @@
   var currentLine = 0;
   var playing = false;
   var fontLevel = 1;
+  var shuffle = true;        // 默认随机播放
+  var order = [];            // 播放顺序（song 索引的排列）
+  var orderPos = 0;          // 当前在 order 中的位置
   var listening = false;
   var recognizing = false;
   var startPerf = 0;
@@ -108,6 +112,39 @@
     requestAnimationFrame(function () { goToLine(0, false); });
   }
 
+  // ---------- 播放顺序（随机/顺序） ----------
+  function buildOrder(keepCurrent) {
+    var n = songs.length;
+    var idx = [];
+    for (var k = 0; k < n; k++) idx.push(k);
+    // Fisher-Yates 洗牌
+    for (var i = n - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = idx[i]; idx[i] = idx[j]; idx[j] = t;
+    }
+    if (keepCurrent && n > 1 && order.length) {
+      // 把当前歌提到队首，其余随机（用于「重新随机」）
+      var cur = order[orderPos];
+      var at = idx.indexOf(cur);
+      if (at > 0) { idx.splice(at, 1); idx.unshift(cur); }
+    }
+    order = idx;
+    orderPos = 0;
+  }
+
+  function loadByOrder(pos) {
+    if (order.length === 0) return;
+    orderPos = ((pos % order.length) + order.length) % order.length;
+    loadSong(order[orderPos]);
+    updateCount();
+  }
+
+  // 当前歌曲在播放顺序中的位置：第 X / 共 N 首
+  function updateCount() {
+    if (!els.songCount || order.length === 0) return;
+    els.songCount.textContent = '第 ' + (orderPos + 1) + ' / 共 ' + order.length + ' 首';
+  }
+
   function goToLine(i, animate) {
     if (lines.length === 0) return;
     if (i < 0) i = 0;
@@ -158,9 +195,37 @@
     els.progressBar.style.width = Math.min(100, (baseOffset / total) * 100) + '%';
   }
 
-  function nextSong() { loadSong(songIndex + 1); play(); speak('下一首'); }
-  function prevSong() { loadSong(songIndex - 1); play(); speak('上一首'); }
+  function nextSong() { loadByOrder(orderPos + 1); play(); speak('下一首'); }
+  function prevSong() { loadByOrder(orderPos - 1); play(); speak('上一首'); }
   function restart() { baseOffset = 0; startPerf = performance.now(); goToLine(0, true); play(); }
+
+  function reshuffle() {
+    shuffle = true;
+    buildOrder(true);   // 保留当前歌为首，后续队列重新随机
+    updateModeHint();
+    updateCount();
+    showToast('已重新随机');
+    speak('已重新随机');
+  }
+  function setShuffle(on) {
+    shuffle = on;
+    if (on) {
+      buildOrder(true);
+    } else {
+      order = [];
+      for (var k = 0; k < songs.length; k++) order.push(k);
+      orderPos = songIndex;
+    }
+    updateModeHint();
+    updateCount();
+    showToast(on ? '已随机播放' : '已顺序播放');
+    speak(on ? '已随机播放' : '已顺序播放');
+  }
+  function updateModeHint() {
+    if (!els.hint) return;
+    var base = shuffle ? '随机播放' : '顺序播放';
+    els.hint.textContent = '模式：' + base + ' · 说：下一首 · 重新随机 · 暂停 · 字体大一点';
+  }
 
   function setFont(delta) {
     fontLevel = clamp(fontLevel + delta, 0, FONT_SIZES.length - 1);
@@ -228,7 +293,10 @@
     { re: /继续|接着唱|播放|开始唱/, fn: function () { play(); showToast('继续'); speak('继续'); } },
     { re: /字体大一点|大一点|放大|字号大/, fn: function () { setFont(1); } },
     { re: /字体小一点|小一点|缩小|字号小/, fn: function () { setFont(-1); } },
-    { re: /这首歌|歌名|叫什么/, fn: function () { var s = songs[songIndex]; showToast(s.title); speak(s.title); } }
+    { re: /这首歌|歌名|叫什么/, fn: function () { var s = songs[songIndex]; showToast(s.title); speak(s.title); } },
+    { re: /重新随机|换个顺序|换一批|重新洗牌/, fn: function () { reshuffle(); } },
+    { re: /顺序播放|取消随机|不要随机/, fn: function () { setShuffle(false); } },
+    { re: /随机播放|开启随机/, fn: function () { setShuffle(true); } }
   ];
 
   function handleCommand(transcript) {
@@ -305,8 +373,10 @@
   function startExperience() {
     els.start.style.display = 'none';
     els.app.classList.add('show');
-    loadSong(0);
+    buildOrder(false);   // 每次进入都重新随机
+    loadByOrder(0);
     applyFont();
+    updateModeHint();
     requestWakeLock();
     if (speechSupported) {
       listening = true;
@@ -319,7 +389,7 @@
     rafId = requestAnimationFrame(tick);
     // 在用户手势内触发一次朗读，解锁后续语音反馈
     var s = songs[songIndex];
-    speak('第一首，' + s.title);
+    speak('随机播放，' + s.title);
   }
 
   function applyFont() {
@@ -333,6 +403,7 @@
     if (act === 'prev') prevSong();
     else if (act === 'next') nextSong();
     else if (act === 'toggle') togglePlay();
+    else if (act === 'shuffle') reshuffle();
     else if (act === 'font+') setFont(1);
     else if (act === 'font-') setFont(-1);
   }

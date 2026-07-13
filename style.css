@@ -75,6 +75,7 @@ body {
 .song-status { font-size: 13px; color: var(--text-sub); }
 .song-title { font-size: 22px; font-weight: 500; margin-top: 2px; }
 .song-artist { font-size: 14px; color: var(--text-sub); margin-top: 2px; }
+.song-count { font-size: 13px; color: var(--accent); margin-top: 6px; font-variant-numeric: tabular-nums; }
 
 .voice { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .voice-dot {
@@ -138,6 +139,12 @@ body {
   cursor: pointer;
 }
 .controls button:active { background: rgba(255, 255, 255, .14); }
+.shuffle-btn {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.shuffle-btn:active { background: rgba(255, 209, 102, .18); }
 
 /* ---------- 语音回显 ---------- */
 .toast {
