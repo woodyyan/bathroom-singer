@@ -104,6 +104,7 @@
     renderLyrics();
     currentLine = 0;
     baseOffset = 0;
+    startPerf = performance.now();
     requestAnimationFrame(function () { goToLine(0, false); });
   }
 
@@ -159,7 +160,7 @@
 
   function nextSong() { loadSong(songIndex + 1); play(); speak('下一首'); }
   function prevSong() { loadSong(songIndex - 1); play(); speak('上一首'); }
-  function restart() { baseOffset = 0; currentLine = -1; goToLine(0, true); play(); }
+  function restart() { baseOffset = 0; startPerf = performance.now(); goToLine(0, true); play(); }
 
   function setFont(delta) {
     fontLevel = clamp(fontLevel + delta, 0, FONT_SIZES.length - 1);
