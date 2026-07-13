@@ -1,0 +1,20 @@
+{
+  "name": "浴室歌手",
+  "short_name": "浴室歌手",
+  "description": "洗澡时清唱的自动滚动歌词机，支持声控与随机播放",
+  "start_url": ".",
+  "scope": ".",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="浴室歌手">
   <meta name="theme-color" content="#0d1117">
   <title>浴室歌手</title>
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -45,6 +47,7 @@
       <div class="hint" id="hint">说：下一首 · 暂停 · 下一行 · 字体大一点</div>
       <div class="controls">
         <button data-act="shuffle" class="shuffle-btn" type="button">重新随机</button>
+        <button data-act="fullscreen" class="fs-btn" type="button">全屏</button>
         <button data-act="prev" type="button">上一首</button>
         <button data-act="toggle" type="button">暂停</button>
         <button data-act="next" type="button">下一首</button>
@@ -54,6 +57,14 @@
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- 全屏引导：iOS Safari 内无法收起地址栏，引导「添加到主屏幕」 -->
+    <div class="fs-banner" id="fsBanner" role="dialog" aria-label="全屏引导">
+      <div class="fs-banner-text">
+        想满屏无地址栏？在 Safari 中点 <b>分享</b> → <b>添加到主屏幕</b>，从主屏图标打开即为全屏。
+      </div>
+      <button id="fsClose" class="fs-close" type="button" aria-label="关闭引导">知道了</button>
+    </div>
   </main>
 
   <script src="lyrics.js"></script>

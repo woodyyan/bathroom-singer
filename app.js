@@ -18,7 +18,9 @@
     lyrics: document.getElementById('lyrics'),
     progressBar: document.getElementById('progressBar'),
     hint: document.getElementById('hint'),
-    toast: document.getElementById('toast')
+    toast: document.getElementById('toast'),
+    fsBanner: document.getElementById('fsBanner'),
+    fsClose: document.getElementById('fsClose')
   };
 
   var songs = [];
@@ -296,7 +298,8 @@
     { re: /这首歌|歌名|叫什么/, fn: function () { var s = songs[songIndex]; showToast(s.title); speak(s.title); } },
     { re: /重新随机|换个顺序|换一批|重新洗牌/, fn: function () { reshuffle(); } },
     { re: /顺序播放|取消随机|不要随机/, fn: function () { setShuffle(false); } },
-    { re: /随机播放|开启随机/, fn: function () { setShuffle(true); } }
+    { re: /随机播放|开启随机/, fn: function () { setShuffle(true); } },
+    { re: /全屏|全屏显示|全屏幕|填满屏幕/, fn: function () { enterFullscreen(); } }
   ];
 
   function handleCommand(transcript) {
@@ -369,6 +372,50 @@
     }
   });
 
+  // ---------- 全屏 / PWA 引导 ----------
+  // iOS Safari 出于苹果安全策略不支持 Element Fullscreen API，无法用 JS 收起地址栏；
+  // 唯一真正满屏的方式是「添加到主屏幕」以 PWA 独立模式启动（navigator.standalone=true）。
+  function canFullscreenApi() {
+    var el = document.documentElement;
+    return !!(el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen);
+  }
+  function enterFullscreen() {
+    // 已从主屏启动 → 已经是无地址栏全屏
+    if (window.navigator.standalone) {
+      showToast('已在全屏模式');
+      speak('已在全屏模式');
+      return;
+    }
+    var el = document.documentElement;
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if (req) {
+      try {
+        var p = req.call(el);
+        if (p && typeof p.then === 'function') {
+          p.catch(function () { showFsGuide(); }); // 用户拒绝/不支持 → 引导
+        }
+        return;
+      } catch (e) { /* 落到引导 */ }
+    }
+    showFsGuide();
+  }
+  function showFsGuide() {
+    if (window.navigator.standalone) {
+      showToast('已在全屏模式');
+      speak('已在全屏模式');
+      return;
+    }
+    if (els.fsBanner) els.fsBanner.classList.add('show');
+  }
+  function hideFsGuide() {
+    if (els.fsBanner) els.fsBanner.classList.remove('show');
+  }
+  function maybeShowFsHint() {
+    if (window.navigator.standalone) return;   // 已全屏
+    if (canFullscreenApi()) { enterFullscreen(); return; } // 桌面/安卓：直接真全屏
+    showFsGuide();                              // iOS Safari：引导添加到主屏幕
+  }
+
   // ---------- 启动 ----------
   function startExperience() {
     els.start.style.display = 'none';
@@ -378,6 +425,7 @@
     applyFont();
     updateModeHint();
     requestWakeLock();
+    maybeShowFsHint();   // 可全屏则直接全屏；iOS 则引导添加到主屏幕
     if (speechSupported) {
       listening = true;
       try { recognition.start(); } catch (err) { /* 忽略 */ }
@@ -404,6 +452,7 @@
     else if (act === 'next') nextSong();
     else if (act === 'toggle') togglePlay();
     else if (act === 'shuffle') reshuffle();
+    else if (act === 'fullscreen') enterFullscreen();
     else if (act === 'font+') setFont(1);
     else if (act === 'font-') setFont(-1);
   }
@@ -416,6 +465,7 @@
     }
     els.startBtn.addEventListener('click', startExperience);
     document.querySelector('.controls').addEventListener('click', onControlClick);
+    if (els.fsClose) els.fsClose.addEventListener('click', hideFsGuide);
     if (synth && 'onvoiceschanged' in synth) { synth.onvoiceschanged = function () { }; }
   }
 
