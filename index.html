@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1117">
+  <title>浴室歌手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 首次手势：满足 iOS 需用户手势才能启动语音识别 -->
+  <div id="start" class="start">
+    <div class="start-card">
+      <div class="start-icon" aria-hidden="true"></div>
+      <h1 class="start-title">点一下，开始唱歌</h1>
+      <p class="start-sub">授权麦克风后，全程声控，无需触碰屏幕</p>
+      <button id="startBtn" class="start-btn">开始唱歌</button>
+      <p id="startHint" class="start-hint"></p>
+    </div>
+  </div>
+
+  <main id="app" class="app">
+    <header class="topbar">
+      <div class="song-meta">
+        <div class="song-status">正在演唱</div>
+        <div class="song-title" id="songTitle">—</div>
+        <div class="song-artist" id="songArtist">—</div>
+      </div>
+      <div class="voice" id="voice">
+        <span class="voice-dot" aria-hidden="true"></span>
+        <span class="voice-label" id="voiceLabel">准备中</span>
+      </div>
+    </header>
+
+    <section class="stage">
+      <div class="lyrics" id="lyrics"></div>
+    </section>
+
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+
+    <footer class="bottombar">
+      <div class="hint" id="hint">说：下一首 · 暂停 · 下一行 · 字体大一点</div>
+      <div class="controls">
+        <button data-act="prev" type="button">上一首</button>
+        <button data-act="toggle" type="button">暂停</button>
+        <button data-act="next" type="button">下一首</button>
+        <button data-act="font-" type="button" aria-label="字体变小">A-</button>
+        <button data-act="font+" type="button" aria-label="字体变大">A+</button>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <script src="lyrics.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
